@@ -137,12 +137,16 @@ For example, to run without auth, use the following config:
 
 ## Build Image
 
+* Install development dependencies for `libsystemd` and the ARM GCC toolchain
+  * Debian: `apt install libsystemd-dev gcc-aarch64-linux-gnu`
+  * Ubuntu: `apt install libsystemd-journal-dev gcc-aarch64-linux-gnu`
+
 * `go get` or `git clone` node-problem-detector repo into `$GOPATH/src/k8s.io` or `$GOROOT/src/k8s.io`
 with one of the below directions:
   * `cd $GOPATH/src/k8s.io && git clone git@github.com:kubernetes/node-problem-detector.git`
   * `cd $GOPATH/src/k8s.io && go get k8s.io/node-problem-detector`
 
-* run `make` in the top directory. It will:
+* Run `make` in the top directory. It will:
   * Build the binary.
   * Build the docker image. The binary and `config/` are copied into the docker image.
 
@@ -157,11 +161,6 @@ The above command will compile the node-problem-detector without [Custom Plugin 
 and [System Stats Monitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/systemstatsmonitor).
 Check out the [Problem Daemon](https://github.com/kubernetes/node-problem-detector#problem-daemon) section
 to see how to disable each problem daemon during compilation time.
-
-**Note**:
-By default, node-problem-detector will be built with systemd support with the `make` command. This requires systemd develop files.
-You should download the systemd develop files first. For Ubuntu, the `libsystemd-journal-dev` package should
-be installed. For Debian, the `libsystemd-dev` package should be installed.
 
 ## Push Image
 
@@ -199,6 +198,42 @@ node-problem-detector --apiserver-override=http://APISERVER_IP:APISERVER_INSECUR
 ```
 
 For more scenarios, see [here](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
+
+## Windows
+
+Node Problem Detector has preliminary support Windows. Most of the functionality has not been tested but filelog plugin works.
+
+Follow [Issue #461](https://github.com/kubernetes/node-problem-detector/issues/461) for development status of Windows support.
+
+### Development
+
+To develop NPD on Windows you'll need to setup your Windows machine for Go development. Install the following tools:
+
+* [Git for Windows](https://git-scm.com/)
+* [Go](https://golang.org/)
+* [Visual Studio Code](https://code.visualstudio.com/)
+* [Make](http://gnuwin32.sourceforge.net/packages/make.htm)
+* [mingw-64 WinBuilds](http://mingw-w64.org/doku.php/download/win-builds)
+  * Tested with x86-64 Windows Native mode.
+  * Add the `$InstallDir\bin` to [Windows `PATH` variable](https://answers.microsoft.com/en-us/windows/forum/windows_10-other_settings-winpc/adding-path-variable/97300613-20cb-4d85-8d0e-cc9d3549ba23).
+
+```powershell
+# Run these commands in the node-problem-detector directory.
+
+# Build in MINGW64 Window
+make clean ENABLE_JOURNALD=0 build-binaries
+
+# Test in MINGW64 Window
+make test
+
+# Run with containerd log monitoring enabled in Command Prompt. (Assumes containerd is installed.)
+%CD%\output\windows_amd64\bin\node-problem-detector.exe --logtostderr --enable-k8s-exporter=false --config.system-log-monitor=%CD%\config\windows-containerd-monitor-filelog.json --config.system-stats-monitor=config\windows-system-stats-monitor.json
+
+# Configure NPD to run as a Windows Service
+sc.exe create NodeProblemDetector binpath= "%CD%\node-problem-detector.exe [FLAGS]" start= demand 
+sc.exe failure NodeProblemDetector reset= 0 actions= restart/10000
+sc.exe start NodeProblemDetector
+```
 
 ## Try It Out
 

@@ -32,6 +32,7 @@ Below metrics are collected from `cpu` component:
 * `system/procs_running`: Number of processes currently running.
 * `system/procs_blocked`: Number of processes currently blocked.
 * `system/interrupts_total`: Total number of interrupts serviced (cumulative).
+* `system/cpu_stats`: Cumulative time each cpu spent in various stages. Collected from `/proc/stats`. Has a label for `cpu` and `stage`.
 
 [/proc doc]: http://man7.org/linux/man-pages/man5/proc.5.html
 
@@ -91,7 +92,8 @@ UnknownModules are derived from the /proc/modules compared with the known-module
 
 And an option:
 `knownModulesConfigPath`: The path to the file that contains the known modules(default
-modules) can be set. By default, the path is set to `known-modules.json`
+modules) can be set. By default, the path is set to `guestosconfig/known-modules.json` 
+(relative to the system-stats-monitor config path).
 
 ### IP Stats (Net Dev)
 
@@ -115,3 +117,14 @@ Below metrics are collected from `net` component:
 * `net/tx_compressed`: Cumulative count of compressed packets transmitted by the device driver.
 
 All of the above have `interface_name` label for the net interface.
+
+## Windows Support
+
+NPD has preliminary support for system stats monitor. The following modules are supported:
+
+* CPU - Idle, System, and User metrics.
+* Memory - Used and available.
+* Disk - Space used and free.
+* Uptime - within kernel version and product name.
+
+All the data is currently retried from the `github.com/shirou/gopsutil` library. Any data parsed directly from `/proc` from Linux is not supported on Windows. There will be later integration to use WMI (Windows Management Instrumentation) to gather node metrics.
